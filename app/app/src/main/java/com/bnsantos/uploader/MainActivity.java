@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.bnsantos.uploader.databinding.ActivityMainBinding;
+import com.bnsantos.uploader.job.UploadJob;
 
 import java.util.ArrayList;
 
@@ -79,7 +80,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private void handleImage(Intent intent) {
     if(intent!=null){
       if(intent.getData()!=null){
-        adapter.add(new Item(intent.getData(), false));
+        Item item = new Item(intent.getData(), false);
+        adapter.add(item);
+        upload(item);
       }else {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
           ClipData clipData = intent.getClipData();
@@ -92,5 +95,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
       }
     }
+  }
+
+  private void upload(Item item) {
+    App application = (App) getApplication();
+    application.getJobManager().addJobInBackground(new UploadJob(this, item, application.getUploaderService()));
+    application.getJobManager().start();
   }
 }

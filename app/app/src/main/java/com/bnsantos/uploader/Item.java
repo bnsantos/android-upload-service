@@ -2,16 +2,21 @@ package com.bnsantos.uploader;
 
 import android.net.Uri;
 
+import java.io.Serializable;
+import java.util.UUID;
+
 /**
  * Created by bruno on 12/05/16.
  */
-public class Item {
+public class Item implements Serializable{
+  private String id;
   private Uri uri;
   private boolean cloud;
 
   public Item(Uri uri, boolean cloud) {
     this.uri = uri;
     this.cloud = cloud;
+    this.id = UUID.randomUUID().toString();
   }
 
   public Uri getUri() {
