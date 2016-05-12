@@ -1,0 +1,14 @@
+.DS_Store
+Thumbs.db
+db.json
+debug.log
+node_modules*/
+.deploy/
+coverage/
+newrelic_agent.log
+*.log
+.settings/
+typings/
+build.tgz
+fabfile.pyc
+build/
