@@ -1,6 +1,7 @@
 package com.bnsantos.uploader.job;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import com.birbit.android.jobqueue.Job;
@@ -8,8 +9,11 @@ import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 import com.bnsantos.uploader.Item;
 import com.bnsantos.uploader.UriUtils;
+import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.network.UploadResponse;
 import com.bnsantos.uploader.network.UploaderService;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -73,10 +77,18 @@ public class UploadJob extends Job {
       file = new File(path);
     }
 
-    String filename = "test1.jpg";
+    String filename = "IMG_" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault()).format(new Date())+ ".jpg";
     Response<UploadResponse> execute = service.upload(filename, MultipartBody.Part.createFormData("file", "value", RequestBody.create(MediaType.parse("image/jpg"), file))).execute();
-    ResponseBody responseBody = execute.errorBody();
-    UploadResponse body = execute.body();
+
+    if(execute.isSuccessful()){
+      UploadResponse body = execute.body();
+      item.setUri(Uri.parse(body.Location));
+      item.setCloud(true);
+      EventBus.getDefault().post(new UploadFinishEvent(item));
+    }else{
+      ResponseBody responseBody = execute.errorBody();
+      Log.i(TAG, "Error");
+    }
     Log.i(TAG, "Job finished to run for item " + item);
   }
 

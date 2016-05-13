@@ -50,6 +50,15 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     notifyItemInserted(itemList.size()-1);
   }
 
+  public void replace(Item item) {
+    int indexOf = itemList.indexOf(item);
+    if(indexOf!=-1){
+      itemList.remove(indexOf);
+      itemList.add(indexOf, item);
+      notifyItemChanged(indexOf);
+    }
+  }
+
   public class ViewHolder extends RecyclerView.ViewHolder{
     private final SimpleDraweeView image;
     private final ImageView cloud;

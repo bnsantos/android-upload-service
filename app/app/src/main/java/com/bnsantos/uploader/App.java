@@ -25,14 +25,25 @@ public class App extends Application {
     super.onCreate();
     Fresco.initialize(this);
 
+    initRetrofit();
+    initJobManager();
+  }
+
+  private void initRetrofit() {
     retrofit = new Retrofit.Builder()
-        .baseUrl("http://192.168.1.101:3000")
+        .baseUrl("http://192.168.1.15:3000")
         .addConverterFactory(GsonConverterFactory.create())
 
         .build();
 
-     uploaderService = retrofit.create(UploaderService.class);
+    uploaderService = retrofit.create(UploaderService.class);
+  }
 
+  public UploaderService getUploaderService() {
+    return uploaderService;
+  }
+
+  private void initJobManager() {
     Configuration.Builder builder = new Configuration.Builder(this)
         .customLogger(new CustomLogger() {
           private static final String TAG = "JOBS";
@@ -62,14 +73,6 @@ public class App extends Application {
         .consumerKeepAlive(120);//wait 2 minute
 
     jobManager = new JobManager(builder.build());
-  }
-
-  public Retrofit getRetrofit() {
-    return retrofit;
-  }
-
-  public UploaderService getUploaderService() {
-    return uploaderService;
   }
 
   public JobManager getJobManager() {

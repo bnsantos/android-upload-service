@@ -34,4 +34,9 @@ public class Item implements Serializable{
   public void setCloud(boolean cloud) {
     this.cloud = cloud;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    return id.equals(((Item)o).id);
+  }
 }
