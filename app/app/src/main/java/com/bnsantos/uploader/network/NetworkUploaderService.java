@@ -10,7 +10,7 @@ import retrofit2.http.Part;
 /**
  * Created by bruno on 12/05/16.
  */
-public interface UploaderService {
+public interface NetworkUploaderService {
   @Multipart
   @POST("/upload")
   Call<UploadResponse> upload(@Header("X-File-Name") String filename, @Part() MultipartBody.Part file);

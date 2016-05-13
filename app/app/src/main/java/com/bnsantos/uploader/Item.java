@@ -39,4 +39,8 @@ public class Item implements Serializable{
   public boolean equals(Object o) {
     return id.equals(((Item)o).id);
   }
+
+  public String getId() {
+    return id;
+  }
 }

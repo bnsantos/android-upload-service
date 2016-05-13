@@ -1,14 +1,14 @@
 package com.bnsantos.uploader.events;
 
-import com.bnsantos.uploader.Item;
-
 /**
  * Created by bruno on 13/05/16.
  */
 public class UploadFinishEvent {
-  public final Item item;
+  public final String id;
+  public final String url;
 
-  public UploadFinishEvent(Item item) {
-    this.item = item;
+  public UploadFinishEvent(String id, String url) {
+    this.id = id;
+    this.url = url;
   }
 }

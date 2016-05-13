@@ -12,12 +12,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.bnsantos.uploader.databinding.ActivityMainBinding;
-import com.bnsantos.uploader.events.UploadFinishEvent;
-import com.bnsantos.uploader.job.UploadJob;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+import com.bnsantos.uploader.service.UploaderService;
 
 import java.util.ArrayList;
 
@@ -103,25 +98,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   }
 
   private void upload(Item item) {
-    App application = (App) getApplication();
-    application.getJobManager().addJobInBackground(new UploadJob(this, item, application.getUploaderService()));
-    application.getJobManager().start();
+    Intent uploadService = new Intent(this, UploaderService.class);
+    Intent uriIntent = new Intent("uri", item.getUri());
+    uploadService.putExtra("uri", uriIntent);
+    uploadService.putExtra("id", item.getId());
+    startService(uploadService);
+    /*App application = (App) getApplication();
+    application.getJobManager().addJobInBackground(new UploadJob(this, item, application.getNetworkUploaderService()));
+    application.getJobManager().start();*/
   }
 
-  @Override
-  protected void onStart() {
-    super.onStart();
-    EventBus.getDefault().register(this);
-  }
 
-  @Override
-  protected void onStop() {
-    super.onStop();
-    EventBus.getDefault().unregister(this);
-  }
-
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onMessageEvent(UploadFinishEvent event){
-    adapter.replace(event.item);
-  }
 }

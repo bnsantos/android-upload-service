@@ -6,7 +6,7 @@ import android.util.Log;
 import com.birbit.android.jobqueue.JobManager;
 import com.birbit.android.jobqueue.config.Configuration;
 import com.birbit.android.jobqueue.log.CustomLogger;
-import com.bnsantos.uploader.network.UploaderService;
+import com.bnsantos.uploader.network.NetworkUploaderService;
 import com.facebook.drawee.backends.pipeline.Fresco;
 
 import retrofit2.Retrofit;
@@ -17,7 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class App extends Application {
   private Retrofit retrofit;
-  private UploaderService uploaderService;
+  private NetworkUploaderService networkUploaderService;
   private JobManager jobManager;
 
   @Override
@@ -31,16 +31,16 @@ public class App extends Application {
 
   private void initRetrofit() {
     retrofit = new Retrofit.Builder()
-        .baseUrl("http://192.168.1.15:3000")
+        .baseUrl("http://192.168.1.101+:3000")
         .addConverterFactory(GsonConverterFactory.create())
 
         .build();
 
-    uploaderService = retrofit.create(UploaderService.class);
+    networkUploaderService = retrofit.create(NetworkUploaderService.class);
   }
 
-  public UploaderService getUploaderService() {
-    return uploaderService;
+  public NetworkUploaderService getNetworkUploaderService() {
+    return networkUploaderService;
   }
 
   private void initJobManager() {
