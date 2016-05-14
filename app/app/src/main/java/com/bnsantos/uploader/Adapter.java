@@ -1,5 +1,6 @@
 package com.bnsantos.uploader;
 
+import android.net.Uri;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,6 +57,17 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
       itemList.remove(indexOf);
       itemList.add(indexOf, item);
       notifyItemChanged(indexOf);
+    }
+  }
+
+  public void replace(String id, String url) {
+    for (int i = 0; i < itemList.size(); i++) {
+      Item item = itemList.get(i);
+      if (item.getId().equals(id)) {
+        item.setUri(Uri.parse(url));
+        item.setCloud(true);
+        notifyItemChanged(i);
+      }
     }
   }
 
