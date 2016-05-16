@@ -8,8 +8,11 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 import com.bnsantos.uploader.UriUtils;
+import com.bnsantos.uploader.events.FileUploadCompleteEvent;
+import com.bnsantos.uploader.events.FileUploadProgressEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.network.NetworkUploaderService;
+import com.bnsantos.uploader.network.ProgressRequestBody;
 import com.bnsantos.uploader.network.UploadResponse;
 
 import org.greenrobot.eventbus.EventBus;
@@ -23,10 +26,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import okhttp3.MediaType;
 import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import retrofit2.Call;
 import retrofit2.Response;
 
 /**
@@ -80,7 +82,26 @@ public class UploadJob extends Job {
     }
 
     String filename = "IMG_" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault()).format(new Date())+ ".jpg";
-    Response<UploadResponse> execute = service.upload(filename, MultipartBody.Part.createFormData("file", "value", RequestBody.create(MediaType.parse("image/jpg"), file))).execute();
+    Call<UploadResponse> upload = service.upload(filename,
+        MultipartBody.Part.createFormData("file", "value",
+        new ProgressRequestBody(file, new ProgressRequestBody.UploadCallbacks() {
+          @Override
+          public void onProgressUpdate(int percentage) {
+            EventBus.getDefault().post(new FileUploadProgressEvent(id, percentage));
+          }
+
+          @Override
+          public void onError() {
+            Log.e(TAG, "Error: " + id);
+          }
+
+          @Override
+          public void onFinish() {
+            EventBus.getDefault().post(new FileUploadCompleteEvent(id));
+
+          }
+        })));
+    Response<UploadResponse> execute = upload.execute();
 
     if(execute.isSuccessful()){
       UploadResponse body = execute.body();

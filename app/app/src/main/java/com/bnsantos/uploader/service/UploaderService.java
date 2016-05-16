@@ -11,6 +11,8 @@ import android.widget.Toast;
 import com.birbit.android.jobqueue.JobManager;
 import com.bnsantos.uploader.App;
 import com.bnsantos.uploader.R;
+import com.bnsantos.uploader.events.FileUploadCompleteEvent;
+import com.bnsantos.uploader.events.FileUploadProgressEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.job.UploadJob;
 import com.bnsantos.uploader.network.NetworkUploaderService;
@@ -51,11 +53,12 @@ public class UploaderService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     if(intent!=null){
-      updateNotification();
+      updateNotification(0);
 
       Intent uri = intent.getParcelableExtra("uri");
       String id = intent.getStringExtra("id");
 
+      COUNT++;
       jobManager.addJobInBackground(new UploadJob(this, id, uri.getData(), service));
       jobManager.start();
     }
@@ -70,23 +73,24 @@ public class UploaderService extends Service {
     notificationManager.cancel(NOTIFICATION_ID);
   }
 
-  private void updateNotification(){
+  private void updateNotification(int progress){
     if(builder==null){
       builder = new NotificationCompat.Builder(this)
           .setWhen(Calendar.getInstance().getTimeInMillis())
           .setAutoCancel(false)
+          .setProgress(100, progress, false)
           .setSmallIcon(R.drawable.ic_cloud_upload)
           .setTicker(getString(R.string.notification_ticker))
           .setContentTitle(getString(R.string.notification_title));
     }
-
-    builder.setContentText("Files remaining " + ++COUNT);
+    builder.setProgress(100, progress, false);
+    builder.setContentText("Files remaining " + COUNT);
 
     notificationManager.notify(NOTIFICATION_ID, builder.build());
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onMessageEvent(UploadFinishEvent event){
+  public void onUploadResponse(UploadFinishEvent event){
     COUNT--;
 
     Toast.makeText(UploaderService.this, "Url " + event.url, Toast.LENGTH_SHORT).show();
@@ -94,5 +98,15 @@ public class UploaderService extends Service {
     if(COUNT == 0){
       stopSelf();
     }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onUploadProgress(FileUploadProgressEvent event){
+    updateNotification(event.progress);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onUploadComplete(FileUploadCompleteEvent event){
+    Toast.makeText(UploaderService.this, "Finished " + event.id, Toast.LENGTH_SHORT).show();
   }
 }
