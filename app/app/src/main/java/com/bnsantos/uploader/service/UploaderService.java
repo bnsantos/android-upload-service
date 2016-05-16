@@ -69,8 +69,6 @@ public class UploaderService extends Service {
   public void onDestroy() {
     super.onDestroy();
     EventBus.getDefault().unregister(this);
-
-    notificationManager.cancel(NOTIFICATION_ID);
   }
 
   private void updateNotification(int progress){
@@ -83,8 +81,13 @@ public class UploaderService extends Service {
           .setTicker(getString(R.string.notification_ticker))
           .setContentTitle(getString(R.string.notification_title));
     }
-    builder.setProgress(100, progress, false);
-    builder.setContentText("Files remaining " + COUNT);
+    if(progress==100){
+      builder.setContentText("Download Finished");
+      builder.setProgress(0, 0, false);
+    }else {
+      builder.setProgress(100, progress, false);
+      builder.setContentText("Files remaining " + COUNT);
+    }
 
     notificationManager.notify(NOTIFICATION_ID, builder.build());
   }
@@ -96,6 +99,7 @@ public class UploaderService extends Service {
     Toast.makeText(UploaderService.this, "Url " + event.url, Toast.LENGTH_SHORT).show();
 
     if(COUNT == 0){
+      updateNotification(100);
       stopSelf();
     }
   }
@@ -105,8 +109,9 @@ public class UploaderService extends Service {
     updateNotification(event.progress);
   }
 
-  @Subscribe(threadMode = ThreadMode.MAIN)
+  @Subscribe(threadMode = ThreadMode.MAIN) //TODO not being called, need to understand why
   public void onUploadComplete(FileUploadCompleteEvent event){
     Toast.makeText(UploaderService.this, "Finished " + event.id, Toast.LENGTH_SHORT).show();
+    updateNotification(100);
   }
 }
