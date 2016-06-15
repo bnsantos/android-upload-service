@@ -1,7 +1,9 @@
 package com.bnsantos.uploader;
 
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Build;
@@ -37,6 +39,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     binding.recyclerView.setAdapter(adapter);
 
     binding.fab.setOnClickListener(this);
+
+    Item item = retrieveItem();
+    if(item!=null){
+      adapter.add(item);
+    }
   }
 
   @Override
@@ -85,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if(intent!=null){
       if(intent.getData()!=null){
         Item item = new Item(intent.getData(), false);
+        putItem(item);
         adapter.add(item);
         upload(item);
       }else {
@@ -124,5 +132,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   protected void onStop() {
     super.onStop();
     EventBus.getDefault().unregister(this);
+  }
+
+  private static final String ITEM_ID = "item_id";
+  private static final String ITEM_URI = "item_uri";
+  private static final String ITEM_CLOUD = "item_cloud";
+
+  private void putItem(Item item){
+    SharedPreferences.Editor editor = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE).edit();
+    editor.putString(ITEM_ID, item.getId());
+    editor.putString(ITEM_URI, item.getUri().toString());
+    editor.putBoolean(ITEM_CLOUD, item.isCloud());
+    editor.apply();
+  }
+
+  private Item retrieveItem(){
+    SharedPreferences sharedPreferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+    Item item = null;
+    if(sharedPreferences.contains(ITEM_ID)){
+      item = new Item(sharedPreferences.getString(ITEM_ID, null), sharedPreferences.getString(ITEM_URI, null), sharedPreferences.getBoolean(ITEM_CLOUD, false));
+    }
+    return item;
   }
 }

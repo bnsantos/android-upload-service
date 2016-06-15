@@ -19,6 +19,12 @@ public class Item implements Serializable{
     this.id = UUID.randomUUID().toString();
   }
 
+  public Item(String id, String uri, boolean cloud) {
+    this.id = id;
+    this.uri = Uri.parse(uri);
+    this.cloud = cloud;
+  }
+
   public Uri getUri() {
     return uri;
   }
