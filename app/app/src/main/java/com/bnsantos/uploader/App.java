@@ -6,6 +6,7 @@ import android.util.Log;
 import com.birbit.android.jobqueue.JobManager;
 import com.birbit.android.jobqueue.config.Configuration;
 import com.birbit.android.jobqueue.log.CustomLogger;
+import com.bnsantos.uploader.model.PersistenceManager;
 import com.bnsantos.uploader.network.NetworkUploaderService;
 import com.facebook.drawee.backends.pipeline.Fresco;
 
@@ -19,6 +20,7 @@ public class App extends Application {
   private Retrofit retrofit;
   private NetworkUploaderService networkUploaderService;
   private JobManager jobManager;
+  private PersistenceManager persistenceManager;
 
   @Override
   public void onCreate() {
@@ -27,11 +29,16 @@ public class App extends Application {
 
     initRetrofit();
     initJobManager();
+    initDB();
+  }
+
+  private void initDB() {
+    persistenceManager = new PersistenceManager(this);
   }
 
   private void initRetrofit() {
     retrofit = new Retrofit.Builder()
-        .baseUrl("http://192.168.1.24:3000")
+        .baseUrl("http://192.168.1.33:3000")
         .addConverterFactory(GsonConverterFactory.create())
 
         .build();
@@ -77,5 +84,9 @@ public class App extends Application {
 
   public JobManager getJobManager() {
     return jobManager;
+  }
+
+  public PersistenceManager getPersistenceManager() {
+    return persistenceManager;
   }
 }

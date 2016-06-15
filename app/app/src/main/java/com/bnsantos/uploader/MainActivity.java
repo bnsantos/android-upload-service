@@ -1,9 +1,7 @@
 package com.bnsantos.uploader;
 
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Build;
@@ -13,8 +11,15 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.view.View;
 import android.widget.Toast;
 
+import com.birbit.android.jobqueue.JobManager;
 import com.bnsantos.uploader.databinding.ActivityMainBinding;
+import com.bnsantos.uploader.events.ItemsEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
+import com.bnsantos.uploader.job.CacheItemJob;
+import com.bnsantos.uploader.job.RetrieveCachedItemsJob;
+import com.bnsantos.uploader.job.UpdateItemJob;
+import com.bnsantos.uploader.model.Item;
+import com.bnsantos.uploader.model.PersistenceManager;
 import com.bnsantos.uploader.service.UploaderService;
 
 import org.greenrobot.eventbus.EventBus;
@@ -27,6 +32,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   private static final int INTENT_IMAGE_GALLERY = 123;
   private ActivityMainBinding binding;
   private Adapter adapter;
+  private PersistenceManager persistenceManager;
+  private JobManager jobManager;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,10 +47,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     binding.fab.setOnClickListener(this);
 
-    Item item = retrieveItem();
-    if(item!=null){
-      adapter.add(item);
-    }
+    App app = (App) getApplication();
+    persistenceManager = app.getPersistenceManager();
+    jobManager = app.getJobManager();
+
+    jobManager.addJobInBackground(new RetrieveCachedItemsJob(persistenceManager));
   }
 
   @Override
@@ -59,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     pickPhoto.addCategory(Intent.CATEGORY_OPENABLE);
     pickPhoto.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-      pickPhoto.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false); //TODO only one picture so far
+      pickPhoto.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
     }
 
     if(pickPhoto.resolveActivity(getPackageManager())!=null){
@@ -92,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     if(intent!=null){
       if(intent.getData()!=null){
         Item item = new Item(intent.getData(), false);
-        putItem(item);
+        jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
         adapter.add(item);
         upload(item);
       }else {
@@ -101,7 +109,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           if (clipData!=null) {
             for (int i = 0; i < clipData.getItemCount() ; i++) {
               Uri uri = clipData.getItemAt(i).getUri();
-              adapter.add(new Item(uri, false));
+              Item item = new Item(uri, false);
+              jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
+              adapter.add(item);
             }
           }
         }
@@ -120,6 +130,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(UploadFinishEvent event){
     adapter.replace(event.id, event.url);
+    jobManager.addJobInBackground(new UpdateItemJob(persistenceManager, event.id, event.url));
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onItems(ItemsEvent event){
+    adapter.add(event.itemList);
+    for (Item item : event.itemList) {
+      if(!item.isCloud()){
+        upload(item);
+      }
+    }
   }
 
   @Override
@@ -132,26 +153,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   protected void onStop() {
     super.onStop();
     EventBus.getDefault().unregister(this);
-  }
-
-  private static final String ITEM_ID = "item_id";
-  private static final String ITEM_URI = "item_uri";
-  private static final String ITEM_CLOUD = "item_cloud";
-
-  private void putItem(Item item){
-    SharedPreferences.Editor editor = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE).edit();
-    editor.putString(ITEM_ID, item.getId());
-    editor.putString(ITEM_URI, item.getUri().toString());
-    editor.putBoolean(ITEM_CLOUD, item.isCloud());
-    editor.apply();
-  }
-
-  private Item retrieveItem(){
-    SharedPreferences sharedPreferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
-    Item item = null;
-    if(sharedPreferences.contains(ITEM_ID)){
-      item = new Item(sharedPreferences.getString(ITEM_ID, null), sharedPreferences.getString(ITEM_URI, null), sharedPreferences.getBoolean(ITEM_CLOUD, false));
-    }
-    return item;
   }
 }

@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.bnsantos.uploader.model.Item;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
@@ -71,6 +72,12 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     }
   }
 
+  public void add(List<Item> itemList) {
+    this.itemList.clear();
+    this.itemList.addAll(itemList);
+    notifyDataSetChanged();
+  }
+
   public class ViewHolder extends RecyclerView.ViewHolder{
     private final SimpleDraweeView image;
     private final ImageView cloud;
@@ -82,8 +89,12 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     }
 
     public void bind(Item item){
+      Uri uri = item.getUri();
+      if(uri==null){
+        uri = Uri.parse(item.getPath());
+      }
       DraweeController controller = Fresco.newDraweeControllerBuilder()
-          .setImageRequest(ImageRequestBuilder.newBuilderWithSource(item.getUri()).setResizeOptions(new ResizeOptions(width, height)).build())
+          .setImageRequest(ImageRequestBuilder.newBuilderWithSource(uri).setResizeOptions(new ResizeOptions(width, height)).build())
           .setAutoPlayAnimations(true)
           .setOldController(image.getController())
           .setTapToRetryEnabled(true)
