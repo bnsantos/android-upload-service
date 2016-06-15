@@ -57,4 +57,12 @@ public class PersistenceManager extends OrmLiteSqliteOpenHelper {
     }
     return mItemDAO;
   }
+
+  public void clearTables() {
+    try {
+      TableUtils.clearTable(connectionSource, Item.class);
+    } catch (SQLException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

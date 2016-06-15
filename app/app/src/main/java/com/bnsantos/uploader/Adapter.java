@@ -78,6 +78,11 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     notifyDataSetChanged();
   }
 
+  public void clear() {
+    itemList.clear();
+    notifyDataSetChanged();
+  }
+
   public class ViewHolder extends RecyclerView.ViewHolder{
     private final SimpleDraweeView image;
     private final ImageView cloud;

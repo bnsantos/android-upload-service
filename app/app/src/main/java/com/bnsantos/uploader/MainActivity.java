@@ -8,6 +8,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -52,6 +55,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     jobManager = app.getJobManager();
 
     jobManager.addJobInBackground(new RetrieveCachedItemsJob(persistenceManager));
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.menu, menu);
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    if(item.getItemId() == R.id.clear){
+      clear();
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -111,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
               Uri uri = clipData.getItemAt(i).getUri();
               Item item = new Item(uri, false);
               jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
+              upload(item);
               adapter.add(item);
             }
           }
@@ -121,8 +141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   private void upload(Item item) {
     Intent uploadService = new Intent(this, UploaderService.class);
-    Intent uriIntent = new Intent("uri", item.getUri());
-    uploadService.putExtra("uri", uriIntent);
+    uploadService.setData(item.getUri());
     uploadService.putExtra("id", item.getId());
     startService(uploadService);
   }
@@ -153,5 +172,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   protected void onStop() {
     super.onStop();
     EventBus.getDefault().unregister(this);
+  }
+
+  private void clear(){
+    adapter.clear();
+    persistenceManager.clearTables();
   }
 }

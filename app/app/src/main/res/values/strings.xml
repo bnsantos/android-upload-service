@@ -1,9 +1,10 @@
 <resources>
   <string name="app_name">UploaderService</string>
-  <string name="title_activity_main2">Main2Activity</string>
   <string name="error_no_gallery_app">There is no app to choose image from gallery</string>
 
   <string name="notification_title">Uploading Files</string>
   <string name="notification_ticker">Queued file to be uploaded</string>
+  <string name="clear">Clear</string>
+  <string name="upload_finished">Upload Finished</string>
 
 </resources>

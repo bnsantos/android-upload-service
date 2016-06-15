@@ -2,6 +2,7 @@ package com.bnsantos.uploader.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -55,11 +56,11 @@ public class UploaderService extends Service {
     if(intent!=null){
       updateNotification(0);
 
-      Intent uri = intent.getParcelableExtra("uri");
+      Uri uri = intent.getData();
       String id = intent.getStringExtra("id");
 
       COUNT++;
-      jobManager.addJobInBackground(new UploadJob(this, id, uri.getData(), service));
+      jobManager.addJobInBackground(new UploadJob(this, id, uri, service));
       jobManager.start();
     }
     return START_STICKY;
@@ -82,7 +83,7 @@ public class UploaderService extends Service {
           .setContentTitle(getString(R.string.notification_title));
     }
     if(progress==100){
-      builder.setContentText("Download Finished");
+      builder.setContentText(getString(R.string.upload_finished));
       builder.setProgress(0, 0, false);
     }else {
       builder.setProgress(100, progress, false);
