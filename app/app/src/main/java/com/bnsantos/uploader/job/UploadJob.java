@@ -8,7 +8,6 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 import com.bnsantos.uploader.UriUtils;
-import com.bnsantos.uploader.events.FileUploadCompleteEvent;
 import com.bnsantos.uploader.events.FileUploadProgressEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.network.NetworkUploaderService;
@@ -25,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Random;
 
 import okhttp3.MultipartBody;
 import okhttp3.ResponseBody;
@@ -38,6 +38,8 @@ public class UploadJob extends Job {
   public static final int PRIORITY = 1;
   public static final String TAG = UploadJob.class.getSimpleName();
 
+  private final Random random;
+  private final String filename;
   private final String id;
   private final Uri uri;
   private final NetworkUploaderService service;
@@ -46,25 +48,28 @@ public class UploadJob extends Job {
 
   public UploadJob(Context context, String id, Uri uri, NetworkUploaderService service) {
     super(new Params(PRIORITY).requireNetwork());//Cannot persist because URI is not serializable
+    this.random = new Random(System.currentTimeMillis());
+    this.filename = "IMG_" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault()).format(new Date()) + "-" + random.nextInt()  + ".jpg";
+
     this.id = id;
     this.uri = uri;
     this.service = service;
     this.weakReference = new WeakReference<>(context);
+    Log.i(TAG, "CREATED Job for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override
   public void onAdded() {
-    Log.i(TAG, "Job added for item " + id);
+    Log.i(TAG, "ADDED Job for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override
   public void onRun() throws Throwable {
-    Log.i(TAG, "Job started to run for item " + id);
+    Log.i(TAG, "RUNNING Job for Item["+id+"] Uri["+uri.toString()+"]");
     String path = UriUtils.getPath(weakReference.get(), uri);
     File file;
     if(path==null){
-      file = File.createTempFile("IMG - " + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault()).format(new Date()), "jpg", weakReference.get().getCacheDir());
-
+      file = File.createTempFile(Integer.toString(random.nextInt()), "jpg", weakReference.get().getCacheDir());
 
       InputStream inputStream = weakReference.get().getContentResolver().openInputStream(uri);
       OutputStream outputStream = new FileOutputStream(file);
@@ -81,7 +86,8 @@ public class UploadJob extends Job {
       file = new File(path);
     }
 
-    String filename = "IMG_" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault()).format(new Date())+ ".jpg";
+    Log.i(TAG, "UPLOADING Job for Item["+id+"] Uri["+uri.toString()+"]");
+
     Call<UploadResponse> upload = service.upload(filename,
         MultipartBody.Part.createFormData("file", "value",
         new ProgressRequestBody(file, new ProgressRequestBody.UploadCallbacks() {
@@ -97,7 +103,7 @@ public class UploadJob extends Job {
 
           @Override
           public void onFinish() {
-            EventBus.getDefault().post(new FileUploadCompleteEvent(id));
+//            EventBus.getDefault().post(new FileUploadCompleteEvent(id));
 
           }
         })));
@@ -105,18 +111,18 @@ public class UploadJob extends Job {
 
     if(execute.isSuccessful()){
       UploadResponse body = execute.body();
+      Log.i(TAG, "FINISHED-UPLOAD Job for Item["+id+"] Path["+path+"] Uri["+uri.toString()+"] Url["+body.Location+"]");
       EventBus.getDefault().post(new UploadFinishEvent(id, body.Location));
     }else{
       ResponseBody responseBody = execute.errorBody();
-      Log.i(TAG, "Error");
+      Log.i(TAG, "ERROR Job for Item["+id+"] Path["+path+"]");
     }
-    Log.i(TAG, "Job finished to run for item " + id);
+    Log.i(TAG, "FINISHED Job for Item["+id+"] Path["+path+"] + Uri["+uri.toString()+"]");
   }
 
   @Override
   protected void onCancel(int cancelReason) {
-    Log.i(TAG, "Job cancelled for item " + id);
-
+    Log.i(TAG, "CANCELLED Job for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override
