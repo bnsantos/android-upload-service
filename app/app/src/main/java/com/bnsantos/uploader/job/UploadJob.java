@@ -17,9 +17,6 @@ import com.bnsantos.uploader.network.UploadResponse;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,38 +52,20 @@ public class UploadJob extends Job {
     this.uri = uri;
     this.service = service;
     this.weakReference = new WeakReference<>(context);
-    Log.i(TAG, "CREATED Job for Item["+id+"] Uri["+uri.toString()+"]");
+    Log.i(TAG, "CREATED UploadJob for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override
   public void onAdded() {
-    Log.i(TAG, "ADDED Job for Item["+id+"] Uri["+uri.toString()+"]");
+    Log.i(TAG, "ADDED UploadJob for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override
   public void onRun() throws Throwable {
-    Log.i(TAG, "RUNNING Job for Item["+id+"] Uri["+uri.toString()+"]");
+    Log.i(TAG, "RUNNING UploadJob for Item["+id+"] Uri["+uri.toString()+"]");
     String path = UriUtils.getPath(weakReference.get(), uri);
-    File file;
-    if(path==null){
-      file = File.createTempFile(Integer.toString(random.nextInt()), "jpg", weakReference.get().getCacheDir());
-
-      InputStream inputStream = weakReference.get().getContentResolver().openInputStream(uri);
-      OutputStream outputStream = new FileOutputStream(file);
-
-      byte[] buffer = new byte[1024];
-      int bytesRead;
-      while ((bytesRead = inputStream.read(buffer)) != -1) {
-        outputStream.write(buffer, 0, bytesRead);
-      }
-
-      inputStream.close();
-      outputStream.close();
-    }else {
-      file = new File(path);
-    }
-
-    Log.i(TAG, "UPLOADING Job for Item["+id+"] Uri["+uri.toString()+"]");
+    File file = new File(path);
+    Log.i(TAG, "UPLOADING UploadJob for Item["+id+"] Uri["+uri.toString()+"]");
 
     Call<UploadResponse> upload = service.upload(filename,
         MultipartBody.Part.createFormData("file", "value",
@@ -109,18 +88,18 @@ public class UploadJob extends Job {
 
     if(execute.isSuccessful()){
       UploadResponse body = execute.body();
-      Log.i(TAG, "FINISHED-UPLOAD Job for Item["+id+"] Path["+path+"] Uri["+uri.toString()+"] Url["+body.Location+"]");
+      Log.i(TAG, "FINISHED-UPLOAD UploadJob for Item["+id+"] Path["+path+"] Uri["+uri.toString()+"] Url["+body.Location+"]");
       EventBus.getDefault().post(new UploadFinishEvent(id, body.Location));
     }else{
       ResponseBody responseBody = execute.errorBody();
-      Log.i(TAG, "ERROR Job for Item["+id+"] Path["+path+"]");
+      Log.i(TAG, "ERROR UploadJob for Item["+id+"] Path["+path+"]");
     }
-    Log.i(TAG, "FINISHED Job for Item["+id+"] Path["+path+"] + Uri["+uri.toString()+"]");
+    Log.i(TAG, "FINISHED UploadJob for Item["+id+"] Path["+path+"] + Uri["+uri.toString()+"]");
   }
 
   @Override
   protected void onCancel(int cancelReason) {
-    Log.i(TAG, "CANCELLED Job for Item["+id+"] Uri["+uri.toString()+"]");
+    Log.i(TAG, "CANCELLED UploadJob for Item["+id+"] Uri["+uri.toString()+"]");
   }
 
   @Override

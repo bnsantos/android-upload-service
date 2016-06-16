@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import com.birbit.android.jobqueue.JobManager;
 import com.bnsantos.uploader.databinding.ActivityMainBinding;
+import com.bnsantos.uploader.events.ImageCopiedEvent;
 import com.bnsantos.uploader.events.ItemsEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.job.CacheItemJob;
@@ -121,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Item item = new Item(intent.getData(), false);
         jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
         adapter.add(item);
-        upload(item);
+        copy(item);
       }else {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
           ClipData clipData = intent.getClipData();
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
               Uri uri = clipData.getItemAt(i).getUri();
               Item item = new Item(uri, false);
               jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
-              upload(item);
+              copy(item);
               adapter.add(item);
             }
           }
@@ -141,6 +142,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   private void upload(Item item) {
     Intent uploadService = new Intent(this, UploaderService.class);
+    uploadService.putExtra("upload", true);
+    uploadService.setData(item.getUri());
+    uploadService.putExtra("id", item.getId());
+    startService(uploadService);
+  }
+
+  private void copy(Item item){
+    Intent uploadService = new Intent(this, UploaderService.class);
+    uploadService.putExtra("upload", false);
     uploadService.setData(item.getUri());
     uploadService.putExtra("id", item.getId());
     startService(uploadService);
@@ -149,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onMessageEvent(UploadFinishEvent event){
     adapter.replace(event.id, event.url);
-    jobManager.addJobInBackground(new UpdateItemJob(persistenceManager, event.id, event.url));
+    jobManager.addJobInBackground(new UpdateItemJob(persistenceManager, event.id, event.url, true));
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
@@ -157,9 +167,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     adapter.add(event.itemList);
     for (Item item : event.itemList) {
       if(!item.isCloud()){
+        if(item.getUri()==null){
+          item.setUri(Uri.parse(item.getPath()));
+        }
         upload(item);
       }
     }
+  }
+
+  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  public void onImageCopied(ImageCopiedEvent event){
+    jobManager.addJobInBackground(new UpdateItemJob(persistenceManager, event.itemId, event.copy.toString(), false));
+    upload(new Item(event.itemId, event.copy.toString(), false));
   }
 
   @Override

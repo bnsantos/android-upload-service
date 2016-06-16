@@ -13,6 +13,7 @@ import com.bnsantos.uploader.App;
 import com.bnsantos.uploader.R;
 import com.bnsantos.uploader.events.FileUploadProgressEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
+import com.bnsantos.uploader.job.CopyJob;
 import com.bnsantos.uploader.job.UploadJob;
 import com.bnsantos.uploader.network.NetworkUploaderService;
 
@@ -56,9 +57,13 @@ public class UploaderService extends Service {
 
       Uri uri = intent.getData();
       String id = intent.getStringExtra("id");
-
-      COUNT++;
-      jobManager.addJobInBackground(new UploadJob(this, id, uri, service));
+      boolean upload = intent.getBooleanExtra("upload", false);
+      if(upload) {
+        COUNT++;
+        jobManager.addJobInBackground(new UploadJob(this, id, uri, service));
+      }else{
+        jobManager.addJobInBackground(new CopyJob(this, id, uri));
+      }
       jobManager.start();
     }
     return START_STICKY;

@@ -17,12 +17,14 @@ public class UpdateItemJob extends Job {
   private final PersistenceManager persistenceManager;
   private final String id;
   private final String url;
+  private final boolean cloud;
 
-  public UpdateItemJob(PersistenceManager persistenceManager, String id, String url) {
+  public UpdateItemJob(PersistenceManager persistenceManager, String id, String url, boolean cloud) {
     super(new Params(PRIORITY));
     this.persistenceManager = persistenceManager;
     this.id = id;
     this.url = url;
+    this.cloud = cloud;
   }
 
   @Override
@@ -35,7 +37,7 @@ public class UpdateItemJob extends Job {
     Item item = (Item) persistenceManager.getItemDAO().queryForId(id);
     if(item!=null){
       item.setPath(url);
-      item.setCloud(true);
+      item.setCloud(cloud);
       int update = persistenceManager.getItemDAO().update(item);
       Log.i(TAG, "Updated item [" + id + "] " + update);
     }
