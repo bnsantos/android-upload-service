@@ -10,6 +10,9 @@ import com.bnsantos.uploader.model.PersistenceManager;
 import com.bnsantos.uploader.network.NetworkUploaderService;
 import com.facebook.drawee.backends.pipeline.Fresco;
 
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -38,9 +41,9 @@ public class App extends Application {
 
   private void initRetrofit() {
     retrofit = new Retrofit.Builder()
-        .baseUrl("http://192.168.1.33:3000")
+        .baseUrl("http://192.168.1.101:3000")
         .addConverterFactory(GsonConverterFactory.create())
-
+        .client(new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).build())
         .build();
 
     networkUploaderService = retrofit.create(NetworkUploaderService.class);

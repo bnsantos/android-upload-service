@@ -103,8 +103,6 @@ public class UploadJob extends Job {
 
           @Override
           public void onFinish() {
-//            EventBus.getDefault().post(new FileUploadCompleteEvent(id));
-
           }
         })));
     Response<UploadResponse> execute = upload.execute();

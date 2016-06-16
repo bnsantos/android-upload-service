@@ -7,12 +7,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.widget.Toast;
 
 import com.birbit.android.jobqueue.JobManager;
 import com.bnsantos.uploader.App;
 import com.bnsantos.uploader.R;
-import com.bnsantos.uploader.events.FileUploadCompleteEvent;
 import com.bnsantos.uploader.events.FileUploadProgressEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.job.UploadJob;
@@ -97,8 +95,6 @@ public class UploaderService extends Service {
   public void onUploadResponse(UploadFinishEvent event){
     COUNT--;
 
-    Toast.makeText(UploaderService.this, "Url " + event.url, Toast.LENGTH_SHORT).show();
-
     if(COUNT == 0){
       updateNotification(100);
       stopSelf();
@@ -108,11 +104,5 @@ public class UploaderService extends Service {
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onUploadProgress(FileUploadProgressEvent event){
     updateNotification(event.progress);
-  }
-
-  @Subscribe(threadMode = ThreadMode.MAIN) //TODO not being called, need to understand why
-  public void onUploadComplete(FileUploadCompleteEvent event){
-    Toast.makeText(UploaderService.this, "Finished " + event.id, Toast.LENGTH_SHORT).show();
-    updateNotification(100);
   }
 }
