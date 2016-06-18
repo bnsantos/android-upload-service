@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.birbit.android.jobqueue.JobManager;
 import com.bnsantos.uploader.databinding.ActivityMainBinding;
-import com.bnsantos.uploader.events.ImageCopiedEvent;
+import com.bnsantos.uploader.events.FileCopiedEvent;
 import com.bnsantos.uploader.events.ItemsEvent;
 import com.bnsantos.uploader.events.UploadFinishEvent;
 import com.bnsantos.uploader.job.CacheItemJob;
@@ -33,7 +33,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-  private static final int INTENT_IMAGE_GALLERY = 123;
+  private static final int INTENT_REQ_OPEN_DOCUMENT = 123;
   private ActivityMainBinding binding;
   private Adapter adapter;
   private PersistenceManager persistenceManager;
@@ -76,22 +76,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
   @Override
   public void onClick(View view) {
-    Intent pickPhoto;
+    Intent openDoc;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      pickPhoto = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+      openDoc = new Intent(Intent.ACTION_OPEN_DOCUMENT);
     }else {
-      pickPhoto = new Intent(Intent.ACTION_GET_CONTENT);
+      openDoc = new Intent(Intent.ACTION_GET_CONTENT);
     }
-
-    pickPhoto.setType("image/*");
-    pickPhoto.addCategory(Intent.CATEGORY_OPENABLE);
-    pickPhoto.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+    openDoc.setType("*/*");
+    openDoc.addCategory(Intent.CATEGORY_OPENABLE);
+    openDoc.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);//or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-      pickPhoto.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+      openDoc.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
     }
 
-    if(pickPhoto.resolveActivity(getPackageManager())!=null){
-      startActivityForResult(pickPhoto, INTENT_IMAGE_GALLERY);
+    if(openDoc.resolveActivity(getPackageManager())!=null){
+      startActivityForResult(openDoc, INTENT_REQ_OPEN_DOCUMENT);
     }else{
       Toast.makeText(MainActivity.this, R.string.error_no_gallery_app, Toast.LENGTH_SHORT).show();
     }
@@ -101,7 +100,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
-    if(requestCode == INTENT_IMAGE_GALLERY && resultCode == RESULT_OK){
+    if(requestCode == INTENT_REQ_OPEN_DOCUMENT && resultCode == RESULT_OK){
+      grantUriPermission("com.bnsantos.uploader", data.getData(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
       final int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         if(data.getData()!=null) {
@@ -112,31 +112,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
           }
         }
       }
-      handleImage(data);
+      handleFile(data);
     }
   }
 
-  private void handleImage(Intent intent) {
+  private void handleFile(Intent intent) {
     if(intent!=null){
       if(intent.getData()!=null){
-        Item item = new Item(intent.getData(), false);
-        jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
-        adapter.add(item);
-        copy(item);
+        doStuffItem(intent.getData());
       }else {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
           ClipData clipData = intent.getClipData();
           if (clipData!=null) {
             for (int i = 0; i < clipData.getItemCount() ; i++) {
               Uri uri = clipData.getItemAt(i).getUri();
-              Item item = new Item(uri, false);
-              jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
-              copy(item);
-              adapter.add(item);
+              doStuffItem(uri);
             }
           }
         }
       }
+    }
+  }
+
+  private void doStuffItem(Uri uri){
+    Item item = new Item(uri, false);
+    jobManager.addJobInBackground(new CacheItemJob(persistenceManager, item));
+    adapter.add(item);
+    if(UriUtils.isImage(this, item.getUri())){
+      upload(item);
+    }else{
+      copy(item);
     }
   }
 
@@ -167,16 +172,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     adapter.add(event.itemList);
     for (Item item : event.itemList) {
       if(!item.isCloud()){
-        if(item.getUri()==null){
-          item.setUri(Uri.parse(item.getPath()));
-        }
         upload(item);
       }
     }
   }
 
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
-  public void onImageCopied(ImageCopiedEvent event){
+  public void onFileCopied(FileCopiedEvent event){
     jobManager.addJobInBackground(new UpdateItemJob(persistenceManager, event.itemId, event.copy.toString(), false));
     upload(new Item(event.itemId, event.copy.toString(), false));
   }

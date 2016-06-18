@@ -8,7 +8,7 @@ import com.birbit.android.jobqueue.Job;
 import com.birbit.android.jobqueue.Params;
 import com.birbit.android.jobqueue.RetryConstraint;
 import com.bnsantos.uploader.UriUtils;
-import com.bnsantos.uploader.events.ImageCopiedEvent;
+import com.bnsantos.uploader.events.FileCopiedEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -52,9 +52,8 @@ public class CopyJob extends Job{
     Log.i(TAG, "RUNNING UploadJob for Item["+itemId+"] Uri["+uri.toString()+"]");
     String path = UriUtils.getPath(weakReference.get(), uri);
     File copy;
-    copy = File.createTempFile(Integer.toString(random.nextInt()), ".jpg", weakReference.get().getCacheDir());
     if(path==null){
-
+      copy = File.createTempFile(Integer.toString(random.nextInt()), "." + UriUtils.extractExtension(weakReference.get(), uri), weakReference.get().getCacheDir());
       InputStream inputStream = weakReference.get().getContentResolver().openInputStream(uri);
       OutputStream outputStream = new FileOutputStream(copy);
 
@@ -67,13 +66,14 @@ public class CopyJob extends Job{
       inputStream.close();
       outputStream.close();
     }else {
+      copy = File.createTempFile(Integer.toString(random.nextInt()), "." + UriUtils.extractExtension(path), weakReference.get().getCacheDir());
       File original = new File(path);
       copy(original, copy);
     }
 
     //Update item?
 
-    EventBus.getDefault().post(new ImageCopiedEvent(itemId, Uri.fromFile(copy)));
+    EventBus.getDefault().post(new FileCopiedEvent(itemId, Uri.fromFile(copy)));
   }
 
   @Override

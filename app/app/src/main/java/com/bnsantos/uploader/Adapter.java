@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.bnsantos.uploader.model.Item;
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -86,18 +87,20 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
   public class ViewHolder extends RecyclerView.ViewHolder{
     private final SimpleDraweeView image;
     private final ImageView cloud;
+    private final TextView filename;
 
     public ViewHolder(View itemView) {
       super(itemView);
       image = (SimpleDraweeView) itemView.findViewById(R.id.image);
       cloud = (ImageView) itemView.findViewById(R.id.cloud);
+      filename = (TextView) itemView.findViewById(R.id.filename);
     }
 
     public void bind(Item item){
       Uri uri = item.getUri();
-      if(uri==null){
-        uri = Uri.parse(item.getPath());
-      }
+
+      filename.setText(uri.toString());
+
       DraweeController controller = Fresco.newDraweeControllerBuilder()
           .setImageRequest(ImageRequestBuilder.newBuilderWithSource(uri).setResizeOptions(new ResizeOptions(width, height)).build())
           .setAutoPlayAnimations(true)

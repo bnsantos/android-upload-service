@@ -13,5 +13,5 @@ import retrofit2.http.Part;
 public interface NetworkUploaderService {
   @Multipart
   @POST("/upload")
-  Call<UploadResponse> upload(@Header("X-File-Name") String filename, @Part() MultipartBody.Part file);
+  Call<UploadResponse> upload(@Header("X-File-Name") String filename, @Part() MultipartBody.Part file, @Header("X-file-mime-type") String mimeType);
 }

@@ -38,7 +38,7 @@ public class Item implements Serializable{
   }
 
   public Uri getUri() {
-    return uri;
+    return uri != null ? uri : Uri.parse(path);
   }
 
   public void setUri(Uri uri) {

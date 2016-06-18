@@ -9,7 +9,12 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.webkit.MimeTypeMap;
 import android.widget.Toast;
+
+import com.facebook.common.media.MediaUtils;
+
+import java.io.File;
 
 /**
  * Created by bruno on 28/04/16.
@@ -142,6 +147,36 @@ public class UriUtils {
         cursor.close();
     }
     return null;
+  }
+
+  public static boolean isImage(Context c, Uri u){
+    return MediaUtils.isPhoto(extractMimeType(c, u));
+  }
+
+  public static String extractExtension(Context context, Uri uri){
+    File f = new File(uri.getPath());
+    if(f.isFile()&&f.exists()){
+      return extractExtension(f.getPath());
+    }else{
+      return MimeTypeMap.getSingleton().getExtensionFromMimeType(context.getContentResolver().getType(uri));
+    }
+  }
+
+  public static String extractMimeType(Context context, Uri uri){
+    File f = new File(uri.getPath());
+    if(f.isFile()){
+      return MediaUtils.extractMime(f.getPath());
+    }else{
+      return context.getContentResolver().getType(uri);
+    }
+  }
+
+  public static String extractExtension(String path) {
+    int pos = path.lastIndexOf('.');
+    if (pos < 0 || pos == path.length() - 1) {
+      return null;
+    }
+    return path.substring(pos + 1);
   }
 
 
