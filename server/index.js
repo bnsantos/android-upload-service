@@ -3,7 +3,7 @@ var fs = require('fs')
 var s3 = new AWS.S3()
 var express = require('express')
 var app = express()
-var bucketName = 'media-bruno'
+var bucketName = 'upload-bucke'
 var bodyParser = require('body-parser')
 var multer  = require('multer')
 
