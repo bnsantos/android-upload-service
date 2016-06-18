@@ -5,11 +5,11 @@ import android.net.Uri;
 /**
  * Created by bruno on 16/06/16.
  */
-public class ImageCopiedEvent {
+public class FileCopiedEvent {
   public final String itemId;
   public final Uri copy;
 
-  public ImageCopiedEvent(String itemId, Uri copy) {
+  public FileCopiedEvent(String itemId, Uri copy) {
     this.itemId = itemId;
     this.copy = copy;
   }

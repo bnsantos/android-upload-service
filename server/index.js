@@ -3,7 +3,7 @@ var fs = require('fs')
 var s3 = new AWS.S3()
 var express = require('express')
 var app = express()
-var bucketName = 'upload-bucket'
+var bucketName = 'media-bruno'
 var bodyParser = require('body-parser')
 var multer  = require('multer')
 
@@ -28,7 +28,8 @@ app.post('/upload', upload.single('file'), function(req, res){
 
   var filename = req.headers['x-file-name'] || 'custom_name_'+new Date()+'.jpg'
   var filepath = req.file.path
-  uploadS3(filepath, filename, function(err, result){
+  var mimeType = req.headers['x-file-mime-type']
+  uploadS3(filepath, filename, mimeType, function(err, result){
     if(err){
       console.log(err);
       res.status(400).send(err)
@@ -46,14 +47,14 @@ app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
 });
 
-function uploadS3(path, filename, cb){
+function uploadS3(path, filename, mimeType, cb){
   var body = fs.readFileSync(path)
   var s3bucket = new AWS.S3({params: {Bucket: bucketName}})
   var params = {
     ACL: 'public-read',
     Key: 'upload-service/'+filename,
     Body: body,
-    ContentType: 'image/jpeg'
+    ContentType: mimeType
   }
   s3bucket.upload(params, cb)
 }
